@@ -6,13 +6,9 @@ import math
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from scipy.special import hermite
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 mpl.rcParams['text.usetex'] = False  # Disable LaTeX rendering
 
 plot_params = {
@@ -791,7 +787,8 @@ def load_models(filename="gpe_models.pkl", save_dir="Gross-Pitaevskii/src/final/
                 hbar=model_data['hbar'],
                 m=model_data['m'],
                 mode=model_data['mode'],
-                eta=model_data['eta']
+                # eta=model_data['eta']
+                eta=model_data['gamma']
             ).to(device)
 
             # Load trained weights
@@ -801,7 +798,9 @@ def load_models(filename="gpe_models.pkl", save_dir="Gross-Pitaevskii/src/final/
             models_by_mode[mode][eta] = model
 
     print(f"Models loaded from {filename}")
-    return (models_by_mode, data['lambda_table'], data['training_history'],
+    # return (models_by_mode, data['lambda_table'], data['training_history'],
+    #         data['constant_history'], data['epochs_history'])
+    return (models_by_mode, data['mu_table'], data['training_history'],
             data['constant_history'], data['epochs_history'])
 
 
@@ -872,8 +871,8 @@ if __name__ == "__main__":
         plot_lambda_vs_eta(lambda_table, modes, p, potential_type, p_save_dir)
 
         # Plot combined loss history
-        print("Generating combined loss plots...")
-        plot_improved_loss_visualization(training_history, modes, eta_values, epochs, p, potential_type, p_save_dir)
-        plot_mode0_eta_loss_visualization(training_history, eta_values, epochs, p, potential_type, p_save_dir)
+        # print("Generating combined loss plots...")
+        # plot_improved_loss_visualization(training_history, modes, eta_values, epochs, p, potential_type, p_save_dir)
+        # plot_mode0_eta_loss_visualization(training_history, eta_values, epochs, p, potential_type, p_save_dir)
 
         print(f"Results saved to: {p_save_dir}/")
