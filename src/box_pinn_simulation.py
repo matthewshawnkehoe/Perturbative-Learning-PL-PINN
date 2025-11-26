@@ -651,21 +651,26 @@ def pretrain_on_analytical_solution(model, mode, X_train, epochs=5000, lr=1e-3, 
     return model
 
 
-def plot_improved_loss_visualization(training_history, modes, eta_values, epochs, p, potential_type,
+def plot_training_loss_visualization(training_history, modes, eta_values, epochs, p, potential_type,
                                      save_dir="Gross-Pitaevskii/src/final/refine/test"):
     """
     Creates informative and smoother visualizations of the training progress.
     """
     os.makedirs(save_dir, exist_ok=True)
 
-    # Plot overall training progress
-    plt.figure(figsize=(12, 8))
+    # Define eta values to plot
+    eta_values_to_plot = [0, 20, 40, 60, 80, 100]
+
+    # Setup color mapping for modes
     max_mode = max(modes) if modes else 0
     colormap = plt.cm.viridis
     colors = [colormap(i / max_mode) for i in modes]
 
-    for i, mode in enumerate(modes):
-        for eta in [0.0]:
+    # Create a separate plot for each eta value
+    for eta in eta_values_to_plot:
+        plt.figure(figsize=(12, 8))
+
+        for i, mode in enumerate(modes):
             if mode in training_history and eta in training_history[mode]:
                 loss_history = training_history[mode][eta]['loss']
 
@@ -684,39 +689,26 @@ def plot_improved_loss_visualization(training_history, modes, eta_values, epochs
                                  linewidth=2.0,
                                  label=f"Mode {mode}")
 
-    plt.title("Training Progress for All Modes", fontsize=20)
-    plt.xlabel("Epochs", fontsize=18)
-    plt.ylabel("Loss", fontsize=18)
-    plt.grid(True, which="both", linestyle="--", alpha=0.6)
-    plt.legend(fontsize=12)
-    plt.tight_layout()
-    plt.savefig(os.path.join(save_dir, f"loss_history_training_progress_p{p}_{potential_type}.png"), dpi=300)
-    plt.close()
+        plt.title(f"Training Progress for All Modes (η = {eta})", fontsize=20)
+        plt.xlabel("Epochs", fontsize=18)
+        plt.ylabel("Loss", fontsize=18)
+        plt.grid(True, which="both", linestyle="--", alpha=0.6)
+        plt.legend(fontsize=12)
+        plt.tight_layout()
+        plt.savefig(os.path.join(save_dir, f"loss_history_training_progress_eta_{eta}_p{p}_{potential_type}.png"),
+                    dpi=300)
+        plt.close()
 
 
-def plot_mode0_eta_loss_visualization(training_history, eta_values_to_plot, epochs, p, potential_type,
-                                        save_dir="Gross-Pitaevskii/src/final/refine/test"):
+def plot_loss_visualization_at_different_modes(training_history, eta_values_to_plot, epochs, p, potential_type,
+                                      save_dir="Gross-Pitaevskii/src/final/refine/test"):
     """
-    Creates a visualization of the training progress for Mode 0 across different eta values.
-
-    Parameters:
-    -----------
-    training_history : dict
-        Dictionary containing training history for all modes and eta values
-    eta_values_to_plot : list
-        List of eta values to include in the plot (e.g., [0, -4, -8, -12, -16, -20])
-    epochs : int
-        Total number of training epochs
-    p : int
-        Nonlinearity power parameter
-    potential_type : str
-        Type of potential ('harmonic', etc.)
-    save_dir : str
-        Directory to save the plot
+    Creates a visualization of the training progress for Modes 0-5 across different eta values.
     """
     os.makedirs(save_dir, exist_ok=True)
 
-    plt.figure(figsize=(12, 8))
+    # Define modes to plot
+    modes_to_plot = [0, 1, 2, 3, 4, 5]
 
     eta_values_to_plot = [eta for eta in eta_values if eta % 20 == 0]
 
@@ -724,38 +716,40 @@ def plot_mode0_eta_loss_visualization(training_history, eta_values_to_plot, epoc
     n_etas = len(eta_values_to_plot)
     colors = [colormap(i / (n_etas - 1)) for i in range(n_etas)]
 
-    mode = 0  # Focus on mode 0
+    # Create a separate plot for each mode
+    for mode in modes_to_plot:
+        plt.figure(figsize=(12, 8))
 
-    if mode in training_history:
-        for i, eta in enumerate(eta_values_to_plot):
-            if eta in training_history[mode]:
-                loss_history = training_history[mode][eta]['loss']
+        if mode in training_history:
+            for i, eta in enumerate(eta_values_to_plot):
+                if eta in training_history[mode]:
+                    loss_history = training_history[mode][eta]['loss']
 
-                # Apply smoothing through a sliding window
-                window_size = min(10, len(loss_history) // 10)
-                if window_size > 1:
-                    ultra_smooth_loss = moving_average(loss_history, window_size)
-                    epoch_nums = np.linspace(0, epochs, len(ultra_smooth_loss))
-                    plt.semilogy(epoch_nums, ultra_smooth_loss,
-                                 color=colors[i],
-                                 linewidth=2.5,
-                                 label=f"η={eta}")
-                else:
-                    epoch_nums = np.linspace(0, epochs, len(loss_history))
-                    plt.semilogy(epoch_nums, loss_history,
-                                 color=colors[i],
-                                 linewidth=2.5,
-                                 label=f"η={eta}")
+                    # Apply smoothing through a sliding window
+                    window_size = min(10, len(loss_history) // 10)
+                    if window_size > 1:
+                        ultra_smooth_loss = moving_average(loss_history, window_size)
+                        epoch_nums = np.linspace(0, epochs, len(ultra_smooth_loss))
+                        plt.semilogy(epoch_nums, ultra_smooth_loss,
+                                     color=colors[i],
+                                     linewidth=2.5,
+                                     label=f"η={eta}")
+                    else:
+                        epoch_nums = np.linspace(0, epochs, len(loss_history))
+                        plt.semilogy(epoch_nums, loss_history,
+                                     color=colors[i],
+                                     linewidth=2.5,
+                                     label=f"η={eta}")
 
-    plt.title(r"Training Progress for Mode 0 Across Varying Interaction Strengths", fontsize=18)
-    plt.xlabel("Epochs", fontsize=18)
-    plt.ylabel("Loss", fontsize=18)
-    plt.grid(True, which="both", linestyle="--", alpha=0.6)
-    plt.legend(fontsize=14, loc='best')
+        plt.title(rf"Training Progress for Mode {mode} Across Varying Interaction Strengths", fontsize=18)
+        plt.xlabel("Epochs", fontsize=18)
+        plt.ylabel("Loss", fontsize=18)
+        plt.grid(True, which="both", linestyle="--", alpha=0.6)
+        plt.legend(fontsize=14, loc='best')
 
-    filename = f"mode0_eta_loss_comparison_p{p}_{potential_type}.png"
-    plt.savefig(os.path.join(save_dir, filename), dpi=300, bbox_inches='tight')
-    plt.close()
+        filename = f"mode{mode}_eta_loss_comparison_p{p}_{potential_type}.png"
+        plt.savefig(os.path.join(save_dir, filename), dpi=300, bbox_inches='tight')
+        plt.close()
 
 
 def moving_average(values, window_size=10):
@@ -887,18 +881,17 @@ if __name__ == "__main__":
             models_by_mode, lambda_table, training_history, constant_history, epochs_history = load_models(filename, p_save_dir)
 
         # Plot wavefunctions for individual modes
-        print("Generating individual mode plots...")
-        plot_wavefunction(models_by_mode, X_test, eta_values, modes, p, constant_history, perturb_const,
-                          potential_type, p_save_dir)
-
-        # Plot λ vs η for all modes
-        print("Generating lambda vs. eta plot...")
-        plot_lambda_vs_eta(lambda_table, modes, p, potential_type, p_save_dir)
+        # print("Generating individual mode plots...")
+        # plot_wavefunction(models_by_mode, X_test, eta_values, modes, p, constant_history, perturb_const,
+        #                   potential_type, p_save_dir)
+        #
+        # # Plot λ vs η for all modes
+        # print("Generating lambda vs. eta plot...")
+        # plot_lambda_vs_eta(lambda_table, modes, p, potential_type, p_save_dir)
 
         # Plot combined loss history
-        # print("Generating combined loss plots...")
-        # plot_improved_loss_visualization(training_history, modes, eta_values, epochs, p, potential_type, p_save_dir)
-        # plot_mode0_eta_loss_visualization(training_history, eta_values, epochs, p, potential_type, p_save_dir)
-
+        print("Generating combined loss plots...")
+        plot_training_loss_visualization(training_history, modes, eta_values, epochs, p, potential_type, p_save_dir)
+        plot_loss_visualization_at_different_modes(training_history, eta_values, epochs, p, potential_type, p_save_dir)
 
         print(f"Results saved to: {p_save_dir}/")
