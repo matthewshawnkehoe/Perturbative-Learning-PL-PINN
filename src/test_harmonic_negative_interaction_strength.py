@@ -838,7 +838,7 @@ if __name__ == "__main__":
     perturb_const = 0.01  # q in paper
 
     # Set the tolerance
-    tol = 0.00001
+    tol = 1e-10
 
     # Nonlinearity powers
     nonlinearity_powers = [3]
